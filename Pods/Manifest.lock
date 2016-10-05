@@ -1,0 +1,10 @@
+PODS:
+  - NYAlertViewController (1.3.0)
+
+DEPENDENCIES:
+  - NYAlertViewController (~> 1.3)
+
+SPEC CHECKSUMS:
+  NYAlertViewController: b93f82e2c1fc6d5e9485512ddbe7b481f463a074
+
+COCOAPODS: 0.39.0
