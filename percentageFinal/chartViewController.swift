@@ -13,6 +13,7 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
     
     var scrollView = UIScrollView()
     var infoView = UIView()
+    var textView = UITextView()
     var viewHeight = CGFloat()
     var viewWidth = CGFloat()
     var chartHeight = CGFloat()
@@ -22,9 +23,10 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
     var line = UILabel()
     
     //variables to populate the infoView
-    var subjects = [String : AnyObject]()
+    var subjects = [[String : AnyObject]]()
     var percentages = [Double]()
     var marksTotal = [Int]()
+    var creditsTotal = [Int]()
     var aggregateWithoutDropping = [Double]()
     var aggregateWithDropping = [Double]()
     
@@ -37,7 +39,7 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
         scrollView = UIScrollView(frame: CGRect(x: 0, y: 10, width: self.view.bounds.width, height: self.view.bounds.height))
         scrollView.backgroundColor = UIColor.white
         scrollView.contentSize = CGSize(width: self.view.bounds.width, height: 1000)
-        scrollView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        scrollView.autoresizingMask = [.flexibleWidth, .flexibleHeight, .flexibleRightMargin, .flexibleRightMargin]
         scrollView.delegate = self
         self.view.addSubview(scrollView)
         
@@ -49,6 +51,7 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
         chart.xAxis.axisRange = Double(percentages.count)
         chart.xAxis.axisMinimum = 1
         chart.xAxis.axisMaximum = Double(percentages.count)
+        chart.animate(xAxisDuration: 0.3, yAxisDuration: 0.3)
         chart.layer.backgroundColor = UIColor.lightText.cgColor
         
         let yVals = percentages
@@ -78,9 +81,52 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
         scrollView.addSubview(line)
         
         infoView = UIView(frame: CGRect(x: 0, y: self.line.frame.maxY, width: self.scrollView.frame.width, height: 500))
-        infoView.backgroundColor = UIColor.lightGray
-        infoView.autoresizingMask = [.flexibleWidth]
+        infoView.backgroundColor = UIColor(red: 231/255, green: 234/255, blue: 236/255, alpha: 1)
+        infoView.autoresizingMask = [.flexibleWidth, .flexibleRightMargin, .flexibleLeftMargin]
         self.scrollView.addSubview(infoView)
+        
+        textView = UITextView(frame: CGRect(x: self.infoView.frame.width/2 - 0.90*self.infoView.frame.width/2, y: self.infoView.frame.height/2 - 0.90*self.infoView.frame.height/2, width: 0.90*self.infoView.frame.width, height: 0.90*self.infoView.frame.height))
+        var textString = String()
+        
+        let s = NSAttributedString(string: "Percentages: \n\n", attributes: [NSFontAttributeName : UIFont(name : "AvenirNext-Medium", size : 20)])
+        let sn = s.string
+        textString.append(sn)
+        
+        for i in 0..<self.percentages.count
+        {
+            
+            let p = percentages[i]
+            textString.append("Semester \(i+1) | \(Double(round(100*p)/100))\n\n")
+            
+        }
+        
+        //calculating the aggregate without dropping
+        var aggregate = Double()
+        var tm = Int()
+        var tc = Int()
+        print(creditsTotal)
+        print(marksTotal)
+        for i in 0..<marksTotal.count
+        {
+            
+            tm += marksTotal[i]
+            tc += creditsTotal[i]
+            
+        }
+        aggregate = Double(tm)/Double(tc)
+        
+        textString.append("Aggregate | \(Double(round(100*aggregate)/100))\n\n")
+        
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.font = UIFont(name: "Avenir Next Condensed", size: 20)
+        textView.text = textString
+        textView.isEditable = false
+        textView.autoresizingMask = [.flexibleWidth, .flexibleLeftMargin, .flexibleRightMargin]
+        let height = textView.sizeThatFits(CGSize(width: self.textView.bounds.width, height: 1000)).height
+        textView.frame = CGRect(x: self.infoView.frame.width/2 - 0.90*self.infoView.frame.width/2, y: self.infoView.frame.height/2 - 0.90*self.infoView.frame.height/2, width: 0.90*self.infoView.frame.width, height: max(0.90*self.infoView.frame.height, height))
+        infoView.frame = CGRect(x: 0, y: self.line.frame.maxY, width: self.scrollView.frame.width, height: max(500, textView.bounds.height+40))
+        infoView.addSubview(textView)
         
         //finally, update the scrollView's contentSize property to fit all its subViews
         self.scrollView.contentSize = CGSize(width: self.view.bounds.width, height: self.chart.bounds.height + 5 + self.infoView.bounds.height)
@@ -90,18 +136,28 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
        
         let y = self.scrollView.contentOffset.y
         
-        print(y)
-        
-        if y < 0
+        if let h = self.navigationController?.navigationBar.frame.height
         {
-            print("dragged")
-            self.chart.frame = CGRect(x: 0, y: (self.navigationController?.navigationBar.frame.height)!, width: self.scrollView.bounds.width, height: 300-0.5*y-(self.navigationController?.navigationBar.frame.height)! * 0.5)
-            self.chart.center.y += y
-            
+            if y < 0
+            {
+                
+                self.chart.frame = CGRect(x: 0, y: h, width: self.scrollView.bounds.width, height: 300-0.5*y-h * 0.5)
+                self.chart.center.y += y
+                
+            }
         }
         
     }
     
+    override func viewDidLayoutSubviews() {
+        
+        let height = textView.sizeThatFits(CGSize(width: self.textView.bounds.width, height: 1000)).height
+        textView.frame = CGRect(x: self.infoView.frame.width/2 - 0.90*self.infoView.frame.width/2, y: self.infoView.frame.height/2 - 0.90*self.infoView.frame.height/2, width: 0.90*self.infoView.frame.width, height: max(0.90*self.infoView.frame.height, height))
+        infoView.frame = CGRect(x: 0, y: self.line.frame.maxY, width: self.scrollView.frame.width, height: max(500, textView.bounds.height+40))
+        self.scrollView.contentSize = CGSize(width: self.view.bounds.width, height: self.chart.bounds.height + 5 + self.infoView.bounds.height)
+
+        
+    }
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()

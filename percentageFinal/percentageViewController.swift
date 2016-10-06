@@ -12,7 +12,7 @@ import NYAlertViewController
 
 //global variables
 
-var semesters = [Int]()
+
 
 class percentageViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate {
     
@@ -26,11 +26,14 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
     var mainWidth = CGFloat()
     var viewWidth = CGFloat()
     var viewHeight = CGFloat()
+    var height = CGFloat()
     var navHeight = CGFloat()
     var currentSemester = Int()
+    var semesters = [Int]()
     var pickerWidth = CGFloat()
     var pickerHeight = CGFloat()
     var tapToHideKeyboard = UITapGestureRecognizer()
+    var resetButton = UIBarButtonItem()
     
     //variables for the branch pickerView
     var branches = ["COE", "IT", "ECE", "ICE", "MPAE"]
@@ -49,8 +52,8 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
     var labelsTheory = [UILabel]()
     var labelsPractical = [UILabel]()
     var labels = [UILabel]()
-    var creditsTotal = Int()
-    var marksTotal = Int()
+    var creditsTotal = [Int]()
+    var marksTotal = [Int]()
     var percentages = [Double]()
     var marks = [[Int]]()
     var currentTextField = UITextField()
@@ -66,10 +69,14 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         super.viewDidLoad()
         
         currentSemester = 1
-        marksTotal = 0
-        creditsTotal = 0
+        marksTotal.removeAll()
+        creditsTotal.removeAll()
         percentages.removeAll()
-        //Loading json data
+        subjects.removeAll()
+        semesters.removeAll()
+        percentages.removeAll()
+        marks.removeAll()
+        creditsTotal.removeAll()
         
         if isLandscape()
         {
@@ -80,6 +87,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
             
         }
         
+        //Loading json data
         let filePath = Bundle.main.path(forResource: "subjects", ofType: "json")!
         do
         {
@@ -109,7 +117,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         pickerWidth = self.view.bounds.width * 0.5
         pickerHeight = self.view.bounds.width*0.5
         
-        mainView.frame = CGRect(x: self.viewWidth/2-self.mainWidth/2, y: self.navHeight*0.75+self.self.viewHeight/2-self.mainHeight/2, width: self.mainWidth, height: self.mainHeight)
+        mainView.frame = CGRect(x: 0.15*self.view.bounds.width/2, y: (self.navigationController?.navigationBar.frame.height)!*0.75+0.15*self.view.bounds.height/2, width: 0.85*self.view.bounds.width, height: 0.85*self.view.bounds.height)
         self.currentFrame = mainView.frame
         mainView.layer.cornerRadius = 8
         mainView.layer.masksToBounds = true
@@ -117,11 +125,11 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         mainView.alpha = 0
         self.view.addSubview(mainView)
         
-        scrollView.frame = CGRect(x: 0, y: 0, width: mainWidth, height: mainHeight)
-        scrollView.contentSize = CGSize(width: mainWidth, height: 800)
+        scrollView.frame = CGRect(x: 0, y: 0, width: 0.85*self.view.bounds.width, height: 0.85*self.view.bounds.height)
+        scrollView.contentSize = CGSize(width: 0.85*self.view.bounds.width, height: 800)
         self.mainView.addSubview(scrollView)
         
-        contentView.frame = CGRect(x: 0, y: 0, width: mainWidth, height: 800);
+        contentView.frame = CGRect(x: 0, y: 0, width: 0.85*self.view.bounds.width, height: 800)
         contentView.backgroundColor = getColor(red: 0, green: 179, blue: 164)
         contentView.layer.masksToBounds = true
         contentView.clipsToBounds = true
@@ -164,7 +172,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
             for i in 0..<self.subjects.count
             {
                 
-                semesters.append(i+1)
+                self.semesters.append(i+1)
                 
             }
             
@@ -183,7 +191,11 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
                     self.semester = self.semesterPickerView.selectedRow(inComponent: 0) + 1
                     for _ in 0..<self.semester
                     {
+                        
                         self.percentages.append(0)
+                        self.marksTotal.append(0)
+                        self.creditsTotal.append(0)
+                        
                     }
                     
                     
@@ -191,8 +203,11 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
                         
                         UIView.animate(withDuration: 0.3, animations: {
                             
-                                                self.drawView()
-                                                self.mainView.alpha = 1
+                            self.resetButton = UIBarButtonItem(barButtonSystemItem: .refresh, target: self, action: #selector(percentageViewController.reset))
+                            self.resetButton.tintColor = getColor(red: 0, green: 179, blue: 164)
+                            self.navigationItem.rightBarButtonItem = self.resetButton
+                            self.drawView()
+                            self.mainView.alpha = 1
 
                         })
                         
@@ -211,14 +226,23 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
     
     override func viewWillLayoutSubviews() {
         
-        currentFrame = self.mainView.frame
+        mainView.frame = CGRect(x: 0.15*self.view.bounds.width/2, y: (self.navigationController?.navigationBar.frame.height)!*0.75+0.15*self.view.bounds.height/2, width: 0.85*self.view.bounds.width, height: 0.85*self.view.bounds.height)
+        scrollView.frame = CGRect(x: 0, y: 0, width: 0.85*self.view.bounds.width, height: 0.85*self.view.bounds.height)
+        contentView.frame = CGRect(x: 0, y: 0, width: 0.85*self.view.bounds.width, height: 800)
+        scrollView.contentSize = CGSize(width: 0.85*self.view.bounds.width, height: 800)
+        scrollView.contentSize.height = height
         
-        mainHeight = self.view.frame.height * 0.90-navHeight
-        mainWidth = self.view.frame.width * 0.85
-        viewHeight = self.view.frame.height
-        viewWidth = self.view.frame.width
-        pickerWidth = self.view.frame.width * 0.5
-        pickerHeight = self.view.frame.width*0.5
+    }
+    
+    func reset()
+    {
+        currentSemester = 1
+        marksTotal.removeAll()
+        creditsTotal.removeAll()
+        percentages.removeAll()
+        subjects.removeAll()
+        self.navigationItem.rightBarButtonItem = nil
+        self.viewDidLoad()
         
     }
     
@@ -321,12 +345,10 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         self.labels.removeAll()
         
         let textHeight : CGFloat = 20
-        let textWidth : CGFloat = mainWidth * 0.3
-        let labelWidth : CGFloat = mainWidth * 0.3
         let labelHeight = textHeight
-        var height : CGFloat = 10
+        height = 10
         
-        let semesterLabel = UILabel(frame: CGRect(x: mainWidth/2-mainWidth*0.85/2, y: height, width: 0.85*mainWidth, height: 25))
+        let semesterLabel = UILabel(frame: CGRect(x: 0.15*self.view.bounds.width/2, y: height, width: 0.85*0.85*self.view.bounds.width, height: 25))
         semesterLabel.text = "Semester \(currentSemester)"
         semesterLabel.font = UIFont(name: "Avenir Next Condensed", size: 25)
         semesterLabel.textAlignment = .center
@@ -343,7 +365,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         for i in 0..<(theory?.count)!
         {
             
-            let label = UILabel(frame: CGRect(x: mainWidth*1/4-labelWidth/2, y: height, width: labelWidth, height: labelHeight))
+            let label = UILabel(frame: CGRect(x: 0.85*self.view.bounds.width*1/4-0.3*0.85*self.view.bounds.width/2, y: height, width: 0.3*0.85*self.view.bounds.width, height: labelHeight))
             label.font = UIFont(name: "Avenir Next Condensed", size: 15)
             if let item = theory?[i]
             {
@@ -353,7 +375,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
             labelsTheory.append(label)
             
             
-            let textField = UITextField(frame: CGRect(x: self.mainWidth*3/4-textWidth/2, y: height, width: textWidth, height: textHeight))
+            let textField = UITextField(frame: CGRect(x: 0.85*self.view.bounds.width*3/4-0.3*0.85*self.view.bounds.width/2, y: height, width: 0.3*0.85*self.view.bounds.width, height: textHeight))
             textField.text = String(describing: theory![i]["marks"]!)
             textField.borderStyle = .roundedRect
             textField.backgroundColor = UIColor.white
@@ -382,7 +404,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         for i in 0..<(practical?.count)!
         {
             
-            let label = UILabel(frame: CGRect(x: mainWidth*1/4-labelWidth/2, y: height, width: labelWidth, height: labelHeight))
+            let label = UILabel(frame: CGRect(x: 0.85*self.view.bounds.width*1/4-0.3*0.85*self.view.bounds.width/2, y: height, width: 0.3*0.85*self.view.bounds.width, height: labelHeight))
             label.font = UIFont(name: "Avenir Next Condensed", size: 15)
             if let item = practical?[i]
             {
@@ -391,7 +413,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
             label.autoresizingMask = [.flexibleWidth, .flexibleRightMargin]
             labelsPractical.append(label)
             
-            let textField = UITextField(frame: CGRect(x: mainWidth*3/4-textWidth/2, y: height, width: textWidth, height: textHeight))
+            let textField = UITextField(frame: CGRect(x: 0.85*self.view.bounds.width*3/4-0.3*0.85*self.view.bounds.width/2, y: height, width: 0.30*0.85*self.view.bounds.width, height: textHeight))
             textField.text = String(describing: practical![i]["marks"]!)
             textField.borderStyle = .roundedRect
             textField.backgroundColor = UIColor.white
@@ -415,9 +437,8 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
             contentView.addSubview(labelsPractical[i])
         }
         
-        let buttonWidth = mainWidth*0.45
         let buttonHeight : CGFloat = 30
-        nextButton = UIButton(frame: CGRect(x: mainWidth*0.75-buttonWidth/2, y: height, width: buttonWidth, height: buttonHeight))
+        nextButton = UIButton(frame: CGRect(x: 0.85*self.view.bounds.width*0.75-0.45*0.85*self.view.bounds.width/2, y: height, width: 0.45*0.85*self.view.bounds.width, height: buttonHeight))
         nextButton.titleLabel?.text = "Next"
         nextButton.setTitle("Next", for: UIControlState())
         nextButton.backgroundColor = UIColor.white
@@ -440,7 +461,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
             nextButton.isEnabled = true
         }
         
-        backButton = UIButton(frame: CGRect(x: mainWidth/4 - buttonWidth/2, y: height, width: buttonWidth, height: buttonHeight))
+        backButton = UIButton(frame: CGRect(x: 0.85*self.view.bounds.width/4 - 0.45*0.85*self.view.bounds.width/2, y: height, width: 0.45*0.85*self.view.bounds.width, height: buttonHeight))
         backButton.setTitle("Back", for: UIControlState())
         backButton.setTitleColor(getColor(red: 0, green: 179, blue: 164), for: UIControlState())
         backButton.setTitleColor(UIColor.lightGray, for: .disabled)
@@ -462,7 +483,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         
         height += 50
         
-        calculateButton = UIButton(frame: CGRect(x: mainWidth*0.5-buttonWidth/2, y: height, width: buttonWidth, height: buttonHeight))
+        calculateButton = UIButton(frame: CGRect(x: 0.85*self.view.bounds.width*0.5-0.45*0.85*self.view.bounds.width/2, y: height, width: 0.45*0.85*self.view.bounds.width, height: buttonHeight))
         calculateButton.setTitle("Calculate", for: UIControlState())
         calculateButton.setTitleColor(getColor(red: 0, green: 179, blue: 164), for: UIControlState())
         calculateButton.titleLabel!.font = UIFont(name: "Avenir Next Condensed", size: 15)
@@ -519,11 +540,16 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         }
         self.subjects[currentSemester-1]["subjects"] = subjectArray as AnyObject?
         
-        percentages[currentSemester-1] = Double(marksTotal)/Double(creditsTotal)
+        self.percentages[currentSemester-1] = Double(marksTotal)/Double(creditsTotal)
+        self.marksTotal[currentSemester-1] = marksTotal
+        self.creditsTotal[currentSemester-1] = creditsTotal
         
+        //Configuring the chart view
         let chartView = chartViewController()
         chartView.percentages = self.percentages
-        
+        chartView.marksTotal = self.marksTotal
+        chartView.creditsTotal = self.creditsTotal
+        chartView.subjects = self.subjects
         self.navigationController?.pushViewController(chartView, animated: true)
         
     }
@@ -568,11 +594,13 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         
         self.subjects[currentSemester-1]["subjects"] = subjectArray as AnyObject?
         
-        percentages[currentSemester-1] = Double(marksTotal)/Double(creditsTotal)
+        self.percentages[currentSemester-1] = Double(marksTotal)/Double(creditsTotal)
+        self.marksTotal[currentSemester-1] = marksTotal
+        self.creditsTotal[currentSemester-1] = creditsTotal
         
         currentSemester += 1
         
-        let originalFrame = self.mainView.frame
+        _ = self.mainView.frame
         
         UIView.animate(withDuration: 0.5, animations: {
             
@@ -586,7 +614,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
                 
                 UIView.animate(withDuration: 0.5, animations: {
                     
-                    self.mainView.frame = originalFrame
+                    self.mainView.center.x = self.view.bounds.width/2
                     self.mainView.center.x -= 20
                     
                     }, completion: { (success) in
@@ -642,10 +670,12 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         self.subjects[currentSemester-1]["subjects"] = subjectArray as AnyObject?
         
         self.percentages[currentSemester-1] = Double(marksTotal)/Double(creditsTotal)
+        self.marksTotal[currentSemester-1] = marksTotal
+        self.creditsTotal[currentSemester-1] = creditsTotal
         
         currentSemester -= 1
         
-        let originalFrame = self.mainView.frame
+        _ = self.mainView.frame
         
         
         UIView.animate(withDuration: 0.5, animations: {
@@ -662,7 +692,7 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
             
             UIView.animate(withDuration: 0.5, animations: {
                 
-                self.mainView.frame = originalFrame
+                self.mainView.center.x = self.view.bounds.width/2
                 self.mainView.center.x += 20
                 
                 
@@ -691,7 +721,9 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         
         if self.textFields.contains(textField)
         {
+            
             self.currentTextField = textField
+        
         }
         
         textField.select(self)
@@ -708,12 +740,16 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         
         if (textField.text?.characters.count)! > 0 && isNumber(text: textField.text!) && Int(textField.text!)! <= 100 && Int(textField.text!)! >= 0
         {
+            
             self.view.endEditing(true)
+        
         }
         
         else
         {
+            
             textField.text = "0";
+        
         }
         
         return true
@@ -725,7 +761,9 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         
         if text.rangeOfCharacter(from: badCharacterSet) == nil
         {
+            
             return true
+        
         }
         
         return false
@@ -735,28 +773,38 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
     
     internal func numberOfComponents(in pickerView: UIPickerView) -> Int
     {
+        
         return 1
+    
     }
     
     
     
     internal func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int
     {
+        
         if pickerView.tag == 0
         {
+        
             return self.branches.count
+        
         }
+        
         return semesters.count
+        
     }
     
     internal func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String?
     {
+        
         if pickerView.tag == 0
         {
+            
             return branches[row]
     
         }
         return String(semesters[row])
+        
     }
     
     func isLandscape() -> Bool
