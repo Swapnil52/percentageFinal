@@ -8,7 +8,7 @@
 
 import UIKit
 import NYAlertViewController
-
+import SWRevealViewController
 
 //global variables
 
@@ -17,6 +17,7 @@ import NYAlertViewController
 class percentageViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate {
     
     //object variables
+    @IBOutlet var menuButton: UIBarButtonItem!
     var scrollView = UIScrollView()
     var mainView = UIView()
     var contentView = UIView()
@@ -77,6 +78,14 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
         percentages.removeAll()
         marks.removeAll()
         creditsTotal.removeAll()
+        
+        self.navigationController?.navigationBar.tintColor = getColor(red: 0, green: 179, blue: 164)
+        
+        if self.revealViewController() != nil {
+            menuButton.target = self.revealViewController()
+            menuButton.action = #selector(SWRevealViewController.revealToggle(_:))
+            self.view.addGestureRecognizer(self.revealViewController().panGestureRecognizer())
+        }
         
         if isLandscape()
         {
