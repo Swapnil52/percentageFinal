@@ -825,7 +825,6 @@ class percentageViewController: UIViewController, UIPickerViewDelegate, UIPicker
             return true
         
         }
-    
         return false
     
     }

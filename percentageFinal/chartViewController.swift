@@ -30,10 +30,19 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
     var aggregateWithoutDropping = [Double]()
     var aggregateWithDropping = [Double]()
     
+    //variables to calculate percentage after dropping
+    var humanities = [[String:AnyObject]]()
+    var core = [[String:AnyObject]]()
+    var applied = [[String:AnyObject]]()
+    
     override func viewDidLoad() {
         
         super.viewDidLoad()
         self.view.backgroundColor = UIColor.white
+        
+        self.humanities.removeAll()
+        self.core.removeAll()
+        self.applied.removeAll()
         
         //Setting up the scrollView
         scrollView = UIScrollView(frame: CGRect(x: 0, y: 10, width: self.view.bounds.width, height: self.view.bounds.height))
@@ -70,8 +79,10 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
             
         }
         let unDroppedLineDataSet = LineChartDataSet(values: chartDataEntries, label: "Without Dropping")
+        unDroppedLineDataSet.colors = [getColor(0, green: 179, blue: 164)]
         let chartData = LineChartData(dataSets: [unDroppedLineDataSet])
         chart.data = chartData
+        chart.gridBackgroundColor = UIColor.lightText
         self.scrollView.addSubview(chart)
         
         //setting up the line demarcating the chart and the info view
@@ -88,15 +99,18 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
         textView = UITextView(frame: CGRect(x: self.infoView.frame.width/2 - 0.90*self.infoView.frame.width/2, y: self.infoView.frame.height/2 - 0.90*self.infoView.frame.height/2, width: 0.90*self.infoView.frame.width, height: 0.90*self.infoView.frame.height))
         var textString = String()
         
-        let s = NSAttributedString(string: "Percentages: \n\n", attributes: [NSFontAttributeName : UIFont(name : "AvenirNext-Medium", size : 20)])
-        let sn = s.string
-        textString.append(sn)
+        let sn = "Percentages: \n\n"
+        //textString.append(sn)
+        
+        let attrs = [NSFontAttributeName : UIFont.boldSystemFont(ofSize: 20), NSUnderlineStyleAttributeName : NSUnderlineStyle.styleSingle, NSUnderlineColorAttributeName : getColor(0, green: 179, blue: 164)] as [String : Any]
+        let scored = NSMutableAttributedString(string: sn, attributes: attrs)
+        textString.append(scored.string)
         
         for i in 0..<self.percentages.count
         {
             
             let p = percentages[i]
-            textString.append("Semester \(i+1) | \(Double(round(100*p)/100))\n\n")
+            textString.append("Semester \(i+1) | \(Double(round(100*p)/100))\n")
             
         }
         
@@ -117,11 +131,230 @@ class chartViewController: UIViewController, ChartViewDelegate, UIScrollViewDele
         
         textString.append("Aggregate | \(Double(round(100*aggregate)/100))\n\n")
         
+        //calculating the percentage after dropping 3 subjects
+        for i in 0..<self.percentages.count
+        {
+            
+            let semester = self.subjects[i]
+            
+            print(semester)
+            
+            if let subjects = semester["subjects"] as? [String:AnyObject]
+            {
+                
+                if let theory = subjects["theory"] as? [[String:AnyObject]]
+                {
+                    
+                    for item in theory
+                    {
+                        
+                        if (item["category"] as? String) == "C"
+                        {
+                            
+                            self.core.append(item)
+                            
+                        }
+                        if (item["category"] as? String) == "H"
+                        {
+                            
+                            self.humanities.append(item)
+                            
+                        }
+                        if (item["category"] as? String) == "A"
+                        {
+                            
+                            self.applied.append(item)
+                            
+                        }
+                        
+                    }
+                    
+                }
+                if let practical = subjects["practical"] as? [[String:AnyObject]]
+                {
+                    
+                    for item in practical
+                    {
+                        
+                        if (item["category"] as? String) == "C"
+                        {
+                            
+                            self.core.append(item)
+                            
+                        }
+                        if (item["category"] as? String) == "H"
+                        {
+                            
+                            self.humanities.append(item)
+                            
+                        }
+                        if (item["category"] as? String) == "A"
+                        {
+                            
+                            self.applied.append(item)
+                            
+                        }
+                        
+                    }
+                    
+                }
+                
+            }
+            
+        }
+        
+        //Calculating the percentage after dropping 3 subjects
+        
+        var percentageDropped = Double()
+        var minH = [String:AnyObject]()
+        var minMarks = 100;
+        for item in humanities
+        {
+            
+            if let marks = item["marks"] as? String
+            {
+                
+                let m = Int(marks)!
+                if m <= minMarks
+                {
+                    minMarks = m
+                    minH = item
+                }
+                
+                
+            }
+            
+            
+        }
+        minMarks = 100
+        var minC = [String:AnyObject]()
+        for item in core
+        {
+            
+            if let marks = item["marks"] as? String
+            {
+                
+                let m = Int(marks)!
+                if m <= minMarks
+                {
+                    minMarks = m
+                    minC = item
+                }
+                
+            }
+            
+        }
+        minMarks = 100
+        var minA = [String:AnyObject]()
+        for item in applied
+        {
+            
+            if let marks = item["marks"] as? String
+            {
+                
+                let m = Int(marks)!
+                if m <= minMarks
+                {
+                    minMarks = m
+                    minA = item
+                }
+                
+            }
+        }
+        
+        if let mh = minH["marks"] as? String
+        {
+            
+            if let ch = minH["credits"] as? NSInteger
+            {
+                
+                tm -= Int(mh)!*ch
+                tc -= ch
+                
+            }
+            
+        }
+        if let mc = minC["marks"] as? String
+        {
+            
+            if let cc = minC["credits"] as? NSInteger
+            {
+                
+                tm -= Int(mc)!*cc
+                tc -= cc
+            }
+            
+        }
+        if let ma = minA["marks"] as? String
+        {
+            
+            if let ca = minA["credits"] as? NSInteger
+            {
+                
+                tm -= Int(ma)!*ca
+                tc -= ca
+                
+            }
+            
+        }
+
+        percentageDropped = Double(tm)/Double(tc)
+        textString.append("Aggregate after dropping 3 subjects | \(Double(round(100*percentageDropped)/100))")
+        
+        textString.append("\n\nDropped Subjects:\n\n")
+        
+        
+            
+        var ds = ""
+        var count = 0
+        if let name = minH["name"] as? String
+        {
+            
+            if let code = minH["code"] as? NSInteger
+            {
+                
+                count += 1
+                ds.append("\(count). \(code) \(name)\n")
+                
+            }
+            
+        }
+        textString.append(ds)
+        ds = ""
+        if let name = minC["name"] as? String
+        {
+            
+            if let code = minC["code"] as? NSInteger
+            {
+                
+                count += 1
+                ds.append("\(count). \(code) \(name)\n")
+                
+            }
+            
+        }
+        textString.append(ds)
+        ds = ""
+        if let name = minA["name"] as? String
+        {
+            
+            if let code = minA["code"] as? NSInteger
+            {
+                
+                count += 1
+                ds.append("\(count). \(code) \(name)\n")
+                
+            }
+            
+        }
+        textString.append(ds)
+        
         textView.isEditable = true
         textView.isSelectable = true
         textView.font = UIFont(name: "Avenir Next Condensed", size: 20)
         textView.text = textString
         textView.isEditable = false
+        textView.isScrollEnabled = false
         textView.autoresizingMask = [.flexibleWidth, .flexibleLeftMargin, .flexibleRightMargin]
         let height = textView.sizeThatFits(CGSize(width: self.textView.bounds.width, height: 1000)).height
         textView.frame = CGRect(x: self.infoView.frame.width/2 - 0.90*self.infoView.frame.width/2, y: self.infoView.frame.height/2 - 0.90*self.infoView.frame.height/2, width: 0.90*self.infoView.frame.width, height: max(0.90*self.infoView.frame.height, height))
